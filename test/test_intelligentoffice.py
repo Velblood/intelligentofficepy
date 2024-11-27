@@ -1,9 +1,10 @@
 import unittest
 from datetime import datetime
-from unittest.mock import patch, Mock
+from unittest.mock import patch, Mock, PropertyMock
 
 import mock.GPIO as GPIO
 from mock.SDL_DS3231 import SDL_DS3231
+from mock.adafruit_veml7700 import VEML7700
 from src.intelligentoffice import IntelligentOffice, IntelligentOfficeError
 
 
@@ -64,3 +65,29 @@ class TestIntelligentOffice(unittest.TestCase):
         io = IntelligentOffice()
         io.manage_blinds_based_on_time()
         self.assertFalse(io.blinds_open)
+
+    @patch.object(VEML7700, "lux", new_callable=PropertyMock)
+    def test_check_manage_light_off(self, mock_lux: Mock):
+        mock_lux.return_value = 500
+        io = IntelligentOffice()
+        io.manage_light_level()
+        self.assertFalse(io.light_on)
+
+    @patch.object(VEML7700, "lux", new_callable=PropertyMock)
+    @patch.object(GPIO, "output")
+    def test_check_manage_light_on_if_not_enough(self, mock_lux: Mock, mock_light: Mock):
+        mock_lux.return_value = 499
+        io = IntelligentOffice()
+        io.manage_light_level()
+        mock_light.assert_called_with(io.LED_PIN, True)
+        self.assertTrue(io.light_on)
+
+    @patch.object(VEML7700, "lux", new_callable=PropertyMock)
+    @patch.object(GPIO, "output")
+    def test_check_manage_light_off_if_enough(self, mock_lux: Mock, mock_light: Mock):
+        mock_lux.return_value = 551
+        io = IntelligentOffice()
+        io.light_on = True
+        io.manage_light_level()
+        mock_light.assert_called_with(io.LED_PIN, False)
+        self.assertFalse(io.light_on)
