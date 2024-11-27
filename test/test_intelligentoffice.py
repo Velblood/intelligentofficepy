@@ -133,3 +133,19 @@ class TestIntelligentOffice(unittest.TestCase):
         io.manage_light_level()
         mock_light.assert_called_with(io.LED_PIN, False)
         self.assertFalse(io.light_on)
+
+    @patch.object(GPIO, "input")
+    def test_check_monitor_buzzer_off(self, mock_sensor: Mock):
+        mock_sensor.return_value = False
+        io = IntelligentOffice()
+        io.monitor_air_quality()
+        self.assertFalse(io.buzzer_on)
+
+    @patch.object(GPIO, "output")
+    @patch.object(GPIO, "input")
+    def test_check_monitor_buzzer_on(self, mock_sensor: Mock, mock_buzzer: Mock):
+        mock_sensor.return_value = True
+        io = IntelligentOffice()
+        io.monitor_air_quality()
+        mock_buzzer.assert_called_with(io.BUZZER_PIN, True)
+        self.assertTrue(io.buzzer_on)
