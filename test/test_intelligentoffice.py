@@ -74,9 +74,11 @@ class TestIntelligentOffice(unittest.TestCase):
         self.assertFalse(io.light_on)
 
     @patch.object(GPIO, "output")
+    @patch.object(GPIO, "input")
     @patch.object(VEML7700, "lux", new_callable=PropertyMock)
-    def test_check_manage_light_on_if_not_enough(self, mock_lux: Mock, mock_light: Mock):
+    def test_check_manage_light_on_if_not_enough(self, mock_lux: Mock, mock_occupancy: Mock, mock_light: Mock):
         mock_lux.return_value = 499
+        mock_occupancy.return_value = True
         io = IntelligentOffice()
         io.manage_light_level()
         mock_light.assert_called_with(io.LED_PIN, True)
@@ -116,7 +118,7 @@ class TestIntelligentOffice(unittest.TestCase):
     @patch.object(VEML7700, "lux", new_callable=PropertyMock)
     def test_check_manage_light_on_if_nobody_left(self, mock_lux: Mock, mock_occupancy: Mock):
         mock_occupancy.return_value = True
-        mock_lux.return_value = 520
+        mock_lux.return_value = 480
         io = IntelligentOffice()
         io.manage_light_level()
         self.assertTrue(io.light_on)
