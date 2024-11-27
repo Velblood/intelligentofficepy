@@ -91,3 +91,43 @@ class TestIntelligentOffice(unittest.TestCase):
         io.manage_light_level()
         mock_light.assert_called_with(io.LED_PIN, False)
         self.assertFalse(io.light_on)
+
+    @patch.object(GPIO, "output")
+    @patch.object(GPIO, "input")
+    @patch.object(VEML7700, "lux", new_callable=PropertyMock)
+    def test_check_manage_light_on_if_someone_enter(self, mock_lux: Mock, mock_occupancy: Mock, mock_light: Mock):
+        mock_occupancy.return_value = True
+        mock_lux.return_value = 480
+        io = IntelligentOffice()
+        io.manage_light_level()
+        mock_light.assert_called_with(io.LED_PIN, True)
+        self.assertTrue(io.light_on)
+
+    @patch.object(GPIO, "input")
+    @patch.object(VEML7700, "lux", new_callable=PropertyMock)
+    def test_check_manage_light_of_if_nobody_in(self, mock_lux: Mock, mock_occupancy: Mock):
+        mock_occupancy.return_value = False
+        mock_lux.return_value = 480
+        io = IntelligentOffice()
+        io.manage_light_level()
+        self.assertFalse(io.light_on)
+
+    @patch.object(GPIO, "input")
+    @patch.object(VEML7700, "lux", new_callable=PropertyMock)
+    def test_check_manage_light_on_if_nobody_left(self, mock_lux: Mock, mock_occupancy: Mock):
+        mock_occupancy.return_value = True
+        mock_lux.return_value = 520
+        io = IntelligentOffice()
+        io.manage_light_level()
+        self.assertTrue(io.light_on)
+
+    @patch.object(GPIO, "output")
+    @patch.object(GPIO, "input")
+    @patch.object(VEML7700, "lux", new_callable=PropertyMock)
+    def test_check_manage_light_on_if_all_left(self, mock_lux: Mock, mock_occupancy: Mock, mock_light: Mock):
+        mock_occupancy.return_value = False
+        mock_lux.return_value = 520
+        io = IntelligentOffice()
+        io.manage_light_level()
+        mock_light.assert_called_with(io.LED_PIN, False)
+        self.assertFalse(io.light_on)
